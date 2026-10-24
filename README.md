@@ -32,9 +32,24 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
+- 运营分析台: <http://127.0.0.1:8080/>
 - Swagger UI: <http://127.0.0.1:8080/docs>
 - OpenAPI JSON: <http://127.0.0.1:8080/openapi.json>
 - Health: `GET /health`
+
+若启动时改了端口（例如 uvicorn 默认的 `8000`），把上面地址里的端口换成实际端口。页面始终在服务根路径 `/`，`/docs` 仍是 OpenAPI。
+
+## 运营分析台
+
+浏览器打开 <http://127.0.0.1:8080/> 。这是挂在本服务上的单页控制台（`app/static/`，无单独构建），用来核对可达性判定，不是地址中台。
+
+1. 在「原始地址」粘贴文本，可补国家代码和结构化字段。
+2. 点「分析可达性」。页面调用同源 `POST /v1/address/reachability`。
+3. 结果区展示整体状态（可送达 / 不可达 / 需人工复核）、`deliverability_score`、`reachable`、解析字段与完整度、原因（code、说明、严重级别、path、rule_id、阶段）、流水线（清洗 → 解析 → 校验 → 地理编码 → 筛单 → 汇总）、地理编码和筛单 `filter_result`（1 人工确认、2 可收派、3 不可收派、4 地址无法确认）。
+4. 阻断项的 path 会标到对应字段或阶段。点原因上的「定位」可跳到那一处。
+5. 样例按钮直接填入 `samples/requests.json` 里的请求：中国南山可送达、印尼仅路名（城市为空而不可达）、哥伦比亚坐标争议、南非脏文本、巴西简写邮编。
+
+未设置 `FENGTU_APP_KEY` 时，页头健康信息里丰图为「模拟」，中国地址走 `FengtuMockAdapter`，不需要真实密钥。不要把真实密钥写入仓库或提交 `.env`。
 
 ## 丰图环境变量
 

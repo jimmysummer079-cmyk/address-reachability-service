@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>地址可达性分析台</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230c6b66'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='16' fill='white' font-family='sans-serif'%3E达%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/static/console.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="seal" aria-hidden="true">达</span>
+        <div>
+          <p class="eyebrow">可达性内核 · 运营分析</p>
+          <h1>地址可达性分析台</h1>
+        </div>
+      </div>
+      <div class="top-actions">
+        <p id="health" class="health" role="status">正在检查服务…</p>
+        <a class="text-link" href="/docs">接口文档</a>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel form-panel" aria-labelledby="form-title">
+        <div class="panel-head">
+          <h2 id="form-title">查询</h2>
+          <p>粘贴原始地址，或点样例直接看失败落在哪个字段、哪一段。</p>
+        </div>
+
+        <div class="samples" id="samples" role="group" aria-label="样例地址"></div>
+
+        <form id="query-form" autocomplete="off">
+          <label class="field-label" for="raw">原始地址</label>
+          <textarea id="raw" name="raw" rows="4" placeholder="例如：广东省深圳市南山区科技园南路"></textarea>
+
+          <div class="split">
+            <div>
+              <label class="field-label" for="country">国家 / 地区</label>
+              <input id="country" name="country" maxlength="2" placeholder="CN" spellcheck="false" />
+              <p class="hint">ISO 3166-1 alpha-2，如 CN、ID、BR</p>
+            </div>
+            <div>
+              <label class="field-label" for="carrier">承运商</label>
+              <select id="carrier" name="carrier">
+                <option value="sf_express">顺丰 sf_express</option>
+                <option value="generic">通用 generic</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="field-label" for="product">产品代码（可选）</label>
+          <input id="product" name="product_code" placeholder="留空即可" />
+
+          <details class="advanced">
+            <summary>结构化字段（可选）</summary>
+            <div class="struct-grid" id="struct-grid"></div>
+            <div class="split">
+              <div>
+                <label class="field-label" for="f-lat">纬度 lat</label>
+                <input id="f-lat" inputmode="decimal" placeholder="可选" />
+              </div>
+              <div>
+                <label class="field-label" for="f-lng">经度 lng</label>
+                <input id="f-lng" inputmode="decimal" placeholder="可选" />
+              </div>
+            </div>
+          </details>
+
+          <p id="form-error" class="form-error" role="alert" hidden></p>
+
+          <div class="form-actions">
+            <button type="submit" class="btn primary" id="submit">分析可达性</button>
+            <button type="button" class="btn ghost" id="clear">清空</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel result-panel" aria-live="polite" aria-relevant="additions">
+        <div id="result">
+          <div class="empty">
+            <p class="empty-kicker">等待查询</p>
+            <h2>粘贴地址，或选择左侧样例</h2>
+            <p>结果会标出整体状态、可送达评分、解析字段、原因 path，以及清洗到汇总的各段是否通过。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>本页只调用本服务的可达性接口，用来核对派送判定。未配置丰图密钥时走本地模拟适配器。</p>
+    </footer>
+    <script src="/static/console.js"></script>
+    <noscript>需要启用 JavaScript 才能提交地址并展示分析结果。</noscript>
+  </body>
+</html>

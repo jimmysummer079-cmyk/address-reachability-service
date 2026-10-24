@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.engine.rule_engine import RuleEngine
 from app.models.schemas import HealthResponse, ReachabilityRequest, ReachabilityResponse
@@ -13,6 +14,7 @@ from app.pipeline.runner import ReachabilityPipeline
 
 ROOT = Path(__file__).resolve().parents[1]
 RULES_PATH = ROOT / "config" / "rules.yaml"
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 engine = RuleEngine(RULES_PATH)
 pipeline = ReachabilityPipeline(engine)
@@ -32,8 +34,15 @@ app = FastAPI(
 
 
 @app.get("/", include_in_schema=False)
-def root():
-    return RedirectResponse(url="/docs")
+def ui_home():
+    """Operator console. OpenAPI remains at /docs."""
+    return FileResponse(
+        STATIC_DIR / "index.html",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 @app.get("/health", response_model=HealthResponse, tags=["ops"])
