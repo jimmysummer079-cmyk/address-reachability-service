@@ -1,0 +1,117 @@
+{
+  "za_dirty": {
+    "status": "reachable",
+    "reachable": true,
+    "deliverability_score": 89.15,
+    "reasons": [
+      {
+        "code": "ADDR_DIRTY_NULL_TOKEN",
+        "path": "address.raw",
+        "rule_id": "CLEAN_NULL_TOKEN",
+        "severity": "warn"
+      },
+      {
+        "code": "ADDR_DIRTY_GLUED_TOKENS",
+        "path": "address.raw",
+        "rule_id": "CLEAN_WORD_GLUE",
+        "severity": "warn"
+      }
+    ],
+    "filter_result": 2,
+    "geocode_confidence": 0.72,
+    "dispute_km": null
+  },
+  "br_abbrev_sp": {
+    "status": "reachable",
+    "reachable": true,
+    "deliverability_score": 94.6,
+    "reasons": [
+      {
+        "code": "ADDR_DIRTY_SEPARATOR",
+        "path": "address.raw",
+        "rule_id": "CLEAN_COLLAPSED_CSV",
+        "severity": "info"
+      },
+      {
+        "code": "ADDR_ADMIN1_ABBREV",
+        "path": "address.admin1",
+        "rule_id": "PARSE_UF_ABBREV_BR",
+        "severity": "info"
+      }
+    ],
+    "filter_result": 2,
+    "geocode_confidence": 0.88,
+    "dispute_km": null
+  },
+  "id_incomplete": {
+    "status": "unreachable",
+    "reachable": false,
+    "deliverability_score": 32.75,
+    "reasons": [
+      {
+        "code": "ADDR_INCOMPLETE",
+        "path": "address.city",
+        "rule_id": "PARSE_INCOMPLETE_ID",
+        "severity": "block"
+      },
+      {
+        "code": "GEO_LOW_CONF",
+        "path": "stage.geocode",
+        "rule_id": "GEO_LOW_CONFIDENCE",
+        "severity": "block"
+      },
+      {
+        "code": "CARRIER_ADDR_UNCONFIRMED",
+        "path": "stage.carrier_filter",
+        "rule_id": "CARRIER_ADDR_UNCONFIRMED",
+        "severity": "block"
+      }
+    ],
+    "filter_result": 4,
+    "geocode_confidence": 0.15,
+    "dispute_km": null
+  },
+  "co_bad_geocode": {
+    "status": "unreachable",
+    "reachable": false,
+    "deliverability_score": 39.15,
+    "reasons": [
+      {
+        "code": "GEO_LOW_CONF",
+        "path": "stage.geocode",
+        "rule_id": "GEO_LOW_CONFIDENCE",
+        "severity": "block"
+      },
+      {
+        "code": "GEO_PROVIDER_DISPUTE",
+        "path": "stage.geocode",
+        "rule_id": "GEO_DISPUTE",
+        "severity": "block"
+      },
+      {
+        "code": "GEO_BAD_CANDIDATE",
+        "path": "stage.geocode",
+        "rule_id": "GEO_BAD_CANDIDATE_CO",
+        "severity": "block"
+      },
+      {
+        "code": "CARRIER_ADDR_UNCONFIRMED",
+        "path": "stage.carrier_filter",
+        "rule_id": "CARRIER_ADDR_UNCONFIRMED",
+        "severity": "block"
+      }
+    ],
+    "filter_result": 4,
+    "geocode_confidence": 0.32,
+    "dispute_km": 31.64
+  },
+  "cn_ok_mock": {
+    "status": "reachable",
+    "reachable": true,
+    "deliverability_score": 96.9,
+    "reasons": [],
+    "filter_result": 2,
+    "geocode_confidence": 0.92,
+    "dispute_km": null
+  }
+}

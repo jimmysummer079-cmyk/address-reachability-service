@@ -1,0 +1,221 @@
+# Address reachability rules — country-routed, SF-inspired filter/verify stages
+# version / reload: change this file and restart, or POST /v1/admin/reload-rules (scaffold)
+
+version: "1.0.0"
+defaults:
+  min_deliverability_score: 70
+  geocode_min_confidence: 0.55
+  geocode_dispute_km: 2.0
+  require_postal_code_countries: ["BR", "ZA", "US", "GB"]
+  coordinate_system_cn: "GCJ-02"
+  coordinate_system_intl: "WGS84"
+
+# Country router: CN → Fengtu mock; INT → intl geocoder mock
+country_routing:
+  CN:
+    parser: fengtu
+    geocoder: fengtu
+    carrier_filter: sf_express
+  default:
+    parser: libpostal_mock
+    geocoder: intl_mock
+    carrier_filter: generic_mock
+
+rules:
+  # --- Clean stage ---
+  - id: CLEAN_NULL_TOKEN
+    stage: clean
+    severity: warn
+    when:
+      raw_contains: ["null", "NULL", ";null;"]
+    then:
+      action: strip_tokens
+      reason_code: ADDR_DIRTY_NULL_TOKEN
+      path: address.raw
+      message: "Raw address contains null/placeholder tokens that must be stripped"
+
+  - id: CLEAN_COLLAPSED_CSV
+    stage: clean
+    severity: info
+    when:
+      country: ["BR"]
+      raw_matches: ",{2,}"
+    then:
+      action: collapse_empty_fields
+      reason_code: ADDR_DIRTY_SEPARATOR
+      path: address.raw
+      message: "Collapsed consecutive empty CSV separators"
+
+  - id: CLEAN_WORD_GLUE
+    stage: clean
+    severity: warn
+    when:
+      country: ["ZA"]
+      raw_matches: "[a-z][A-Z]|[A-Za-z]\\d|\\d[A-Za-z]"
+    then:
+      action: split_glued_tokens
+      reason_code: ADDR_DIRTY_GLUED_TOKENS
+      path: address.raw
+      message: "Glued tokens detected (e.g. RoadAnderbolt, North1459); attempt boundary restore"
+
+  # --- Parse / completeness ---
+  - id: PARSE_MISSING_COUNTRY
+    stage: parse
+    severity: block
+    when:
+      field_missing: ["country"]
+    then:
+      action: fail
+      reason_code: ADDR_COUNTRY_MISSING
+      path: address.country
+      message: "Country (ISO 3166-1 alpha-2) is required for routing"
+
+  - id: PARSE_INCOMPLETE_ID
+    stage: parse
+    severity: block
+    when:
+      country: ["ID"]
+      any_field_missing: ["city", "locality", "postal_code", "admin2"]
+      field_present: ["road"]
+    then:
+      action: fail
+      reason_code: ADDR_INCOMPLETE
+      path: address.city
+      message: "Indonesia address has road only (e.g. JL. GANDARIA I); city/kecamatan/postal required"
+
+  - id: PARSE_PROVINCE_MISSING_CN
+    stage: parse
+    severity: block
+    when:
+      country: ["CN"]
+      field_missing: ["province"]
+    then:
+      action: fail
+      reason_code: ADDR_PROVINCE_MISSING
+      path: address.province
+      message: "China address missing province/直辖市"
+
+  - id: PARSE_UF_ABBREV_BR
+    stage: parse
+    severity: info
+    when:
+      country: ["BR"]
+      admin1_in: ["SP", "RJ", "MG", "RS", "PR", "BA", "SC", "PE", "CE", "GO", "DF"]
+    then:
+      action: expand_admin1
+      reason_code: ADDR_ADMIN1_ABBREV
+      path: address.admin1
+      message: "Brazil UF abbreviation expanded via dictionary (e.g. SP→São Paulo)"
+
+  - id: VALIDATE_POSTCODE_BR
+    stage: validate
+    severity: block
+    when:
+      country: ["BR"]
+      postal_code_invalid: true
+    then:
+      action: fail
+      reason_code: ADDR_POSTCODE_INVALID
+      path: address.postal_code
+      message: "Brazil CEP failed format/normalize (expect NNNNN-NNN)"
+
+  - id: VALIDATE_POSTCODE_ZA
+    stage: validate
+    severity: warn
+    when:
+      country: ["ZA"]
+      postal_code_invalid: true
+    then:
+      action: fail
+      reason_code: ADDR_POSTCODE_INVALID
+      path: address.postal_code
+      message: "South Africa postal code should be 4 digits"
+
+  # --- Geocode / verify ---
+  - id: GEO_LOW_CONFIDENCE
+    stage: geocode
+    severity: block
+    when:
+      geocode_confidence_lt: 0.55
+    then:
+      action: fail
+      reason_code: GEO_LOW_CONF
+      path: stage.geocode
+      message: "Geocode confidence below threshold; do not auto-accept coordinates"
+
+  - id: GEO_DISPUTE
+    stage: geocode
+    severity: block
+    when:
+      geocode_provider_dispute_km_gt: 2.0
+    then:
+      action: fail
+      reason_code: GEO_PROVIDER_DISPUTE
+      path: stage.geocode
+      message: "Two geocoders disagree beyond distance threshold; human review required"
+
+  - id: GEO_BAD_CANDIDATE_CO
+    stage: geocode
+    severity: block
+    when:
+      country: ["CO"]
+      sample_tag: "co_bad_geocode"
+    then:
+      action: fail
+      reason_code: GEO_BAD_CANDIDATE
+      path: stage.geocode
+      message: "Colombia candidate appears offset (tens of km); reject low-quality pin"
+
+  - id: VERIFY_FAIL_FENGTU
+    stage: verify
+    severity: block
+    when:
+      country: ["CN"]
+      verify_ok: false
+    then:
+      action: fail
+      reason_code: VERIFY_FAIL
+      path: stage.verify
+      message: "Fengtu-style address verify failed (fictional/demolished/unmatched)"
+
+  # --- Carrier filter (SF filterResult inspired) ---
+  - id: CARRIER_OUT_OF_SERVICE
+    stage: carrier_filter
+    severity: block
+    when:
+      filter_result_in: [3]
+    then:
+      action: fail
+      reason_code: CARRIER_OUT_OF_SERVICE
+      path: stage.carrier_filter
+      message: "Carrier filterResult=3 (不可收派); see remark for 收方/派方超范围"
+
+  - id: CARRIER_ADDR_UNCONFIRMED
+    stage: carrier_filter
+    severity: block
+    when:
+      filter_result_in: [4]
+    then:
+      action: fail
+      reason_code: CARRIER_ADDR_UNCONFIRMED
+      path: stage.carrier_filter
+      message: "Carrier filterResult=4 (地址无法确认)"
+
+  - id: CARRIER_MANUAL
+    stage: carrier_filter
+    severity: warn
+    when:
+      filter_result_in: [1]
+    then:
+      action: soft_fail
+      reason_code: CARRIER_MANUAL_CONFIRM
+      path: stage.carrier_filter
+      message: "Carrier filterResult=1 (人工确认); hold for manual sieve"
+
+# Score weights for deliverability aggregation (POD risk is out of scope for this API)
+score_weights:
+  completeness: 0.30
+  parse_confidence: 0.15
+  verify: 0.20
+  geocode_confidence: 0.20
+  carrier_in_service: 0.15

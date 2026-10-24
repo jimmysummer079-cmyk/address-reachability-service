@@ -1,0 +1,42 @@
+{
+  "za_dirty": {
+    "address": {
+      "country": "ZA",
+      "raw": "Gauteng; NDC BoksburgCnr of Dam and Main RoadAnderboltBoksburg North1459;null;"
+    },
+    "carrier": "generic"
+  },
+  "br_abbrev_sp": {
+    "address": {
+      "country": "BR",
+      "raw": "Rua,,,,ALAMEDA EUROPA,945,TAMBORE,SANTANA DE PARNAIBA,SP,06.543-325"
+    },
+    "carrier": "generic"
+  },
+  "id_incomplete": {
+    "address": {
+      "country": "ID",
+      "raw": "JL. GANDARIA I"
+    },
+    "carrier": "generic"
+  },
+  "co_bad_geocode": {
+    "address": {
+      "country": "CO",
+      "raw": "Transversal 32 No. 134A-49",
+      "sample_tag": "co_bad_geocode"
+    },
+    "carrier": "generic"
+  },
+  "cn_ok_mock": {
+    "address": {
+      "country": "CN",
+      "province": "广东省",
+      "city": "深圳市",
+      "county": "南山区",
+      "road": "科技园南路",
+      "raw": "广东省深圳市南山区科技园南路"
+    },
+    "carrier": "sf_express"
+  }
+}

@@ -1,0 +1,94 @@
+# OpenAPI 3.1 snippet — full schema also at GET /openapi.json when the server runs
+openapi: 3.1.0
+info:
+  title: Address Reachability Service
+  version: 0.1.0
+  description: >
+    POST an address; receive deliverability/reachability with machine-readable
+    reason codes and path pointers (address.* or stage.*).
+paths:
+  /health:
+    get:
+      summary: Liveness + adapter mode
+      responses:
+        "200":
+          description: OK
+  /v1/address/reachability:
+    post:
+      summary: Query address reachability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReachabilityRequest"
+            examples:
+              za_dirty:
+                value:
+                  address:
+                    country: ZA
+                    raw: "Gauteng; NDC BoksburgCnr of Dam and Main RoadAnderboltBoksburg North1459;null;"
+              id_incomplete:
+                value:
+                  address:
+                    country: ID
+                    raw: "JL. GANDARIA I"
+      responses:
+        "200":
+          description: Reachability decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReachabilityResponse"
+components:
+  schemas:
+    ReachabilityRequest:
+      type: object
+      required: [address]
+      properties:
+        address:
+          type: object
+          properties:
+            country: { type: string, example: "BR" }
+            raw: { type: string }
+            province: { type: string }
+            admin1: { type: string }
+            city: { type: string }
+            locality: { type: string }
+            road: { type: string }
+            house_number: { type: string }
+            postal_code: { type: string }
+            sample_tag: { type: string }
+        carrier: { type: string, default: sf_express }
+        product_code: { type: string }
+        options: { type: object }
+    Reason:
+      type: object
+      required: [code, message, path]
+      properties:
+        code: { type: string, example: ADDR_INCOMPLETE }
+        message: { type: string }
+        path: { type: string, example: address.city }
+        severity: { type: string, enum: [info, warn, block] }
+        rule_id: { type: string, example: PARSE_INCOMPLETE_ID }
+        stage: { type: string, example: parse }
+    ReachabilityResponse:
+      type: object
+      properties:
+        status: { type: string, enum: [reachable, unreachable, needs_review] }
+        reachable: { type: boolean }
+        deliverability_score: { type: number }
+        reasons:
+          type: array
+          items: { $ref: "#/components/schemas/Reason" }
+        parsed: { type: object }
+        geocode: { type: object }
+        carrier_filter:
+          type: object
+          properties:
+            filter_result:
+              type: integer
+              description: "1 manual, 2 in service, 3 out of service, 4 unconfirmed (SF-aligned)"
+        pipeline: { type: array }
+        rules_version: { type: string }
+        request_id: { type: string }
