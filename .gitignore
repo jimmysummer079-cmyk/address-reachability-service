@@ -18,3 +18,12 @@ secrets/
 *.key
 credentials.json
 service-account*.json
+
+# Tooling / build
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.log

@@ -5,7 +5,9 @@
 - 设计文档（中文）：[DESIGN.md](./DESIGN.md)
 - OpenAPI 摘要：[docs/openapi-snippet.yaml](./docs/openapi-snippet.yaml)
 - 规则配置：[config/rules.yaml](./config/rules.yaml)
-- **无真实丰图 / 顺丰凭证** — 全部为 interface + mock
+- 丰图：设置环境变量 `FENGTU_APP_KEY` 时走 live SaaS（见 [FENGTU_LIVE.md](./FENGTU_LIVE.md)）；未设置则用 mock
+- 顺丰筛单仍为 mock（无开放平台凭证）
+- 配置模板：[`.env.example`](./.env.example)（切勿提交 `.env`）
 
 ## 要求
 
@@ -26,6 +28,16 @@ uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
 - Swagger UI: <http://127.0.0.1:8080/docs>
 - OpenAPI JSON: <http://127.0.0.1:8080/openapi.json>
 - Health: `GET /health`
+
+## 丰图环境变量
+
+```bash
+# copy template; put real AppKey only in local .env (gitignored)
+cp .env.example .env
+# export FENGTU_APP_KEY=...   # never commit; never echo
+```
+
+Live client: `app/adapters/fengtu_client.py`（`addressidentify` + `geocode/geo`）。详情见 [FENGTU_LIVE.md](./FENGTU_LIVE.md)。
 
 ## 示例 curl
 
@@ -94,8 +106,9 @@ curl -s -X POST http://127.0.0.1:8080/v1/address/reachability \
 
 `clean → parse → validate → geocode/verify → carrier_filter → aggregate`
 
-中国：`fengtu_mock` + `sf_filter_mock`（筛单 `filterResult` 语义）。  
-国际：`intl_mock` + `generic_mock`。
+中国：`fengtu_live`（`FENGTU_APP_KEY` 已设）或 `fengtu_mock` + `sf_filter_mock`。  
+国际：`intl_mock` + `generic_mock`。  
+`GET /health` 的 `adapters.fengtu` 为 `live` 或 `mock`。
 
 ## 重载规则
 

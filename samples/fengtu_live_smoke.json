@@ -1,0 +1,73 @@
+{
+  "key_present": true,
+  "address_len": 15,
+  "addressidentify": {
+    "http_status": 403,
+    "ok": false,
+    "json_keys": [
+      "message"
+    ],
+    "shape": {
+      "message": "str"
+    },
+    "biz_status": null
+  },
+  "geocode": {
+    "http_status": 403,
+    "ok": false,
+    "json_keys": [
+      "message"
+    ],
+    "shape": {
+      "message": "str"
+    },
+    "biz_status": null
+  },
+  "client_parse": {
+    "provider": "fengtu_live",
+    "completeness": "insufficient",
+    "parse_confidence": 0.1,
+    "has_province": false,
+    "has_city": false,
+    "last_error": {
+      "reason_code": "FENGTU_AUTH_FAIL",
+      "message": "Fengtu auth failed (HTTP 403)",
+      "http_status": 403,
+      "stage": "parse"
+    }
+  },
+  "client_geocode": {
+    "has_lat": false,
+    "has_lng": false,
+    "confidence": 0.0,
+    "provider": "fengtu_live",
+    "last_error": {
+      "reason_code": "FENGTU_AUTH_FAIL",
+      "message": "Fengtu auth failed (HTTP 403)",
+      "http_status": 403,
+      "stage": "geocode"
+    }
+  },
+  "client_verify": {
+    "ok": false,
+    "level": "api_error",
+    "reason_code": "FENGTU_AUTH_FAIL"
+  },
+  "pipeline_fengtu_mode": "live",
+  "pipeline": {
+    "status": "unreachable",
+    "reachable": false,
+    "score": 7.5,
+    "reason_codes": [
+      "ADDR_PROVINCE_MISSING",
+      "FENGTU_AUTH_FAIL",
+      "FENGTU_AUTH_FAIL",
+      "VERIFY_FAIL",
+      "FENGTU_AUTH_FAIL",
+      "GEO_LOW_CONF",
+      "CARRIER_ADDR_UNCONFIRMED"
+    ],
+    "geocode_provider": "fengtu_live",
+    "parsed_completeness": "insufficient"
+  }
+}

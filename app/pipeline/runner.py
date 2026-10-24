@@ -7,6 +7,7 @@ import time
 import uuid
 from typing import Any, Optional
 
+from app.adapters.fengtu_client import FengtuClient
 from app.adapters.fengtu_mock import FengtuMockAdapter
 from app.adapters.intl_mock import GenericCarrierMock, IntlMockAdapter
 from app.adapters.sf_filter_mock import SFFilterMockAdapter
@@ -30,9 +31,15 @@ def _ms(start: float) -> float:
 
 
 class ReachabilityPipeline:
-    def __init__(self, engine: RuleEngine):
+    def __init__(self, engine: RuleEngine, fengtu=None):
         self.engine = engine
-        self.fengtu = FengtuMockAdapter()
+        # Prefer live Fengtu when FENGTU_APP_KEY is set; else mock.
+        if fengtu is not None:
+            self.fengtu = fengtu
+        else:
+            live = FengtuClient.from_env()
+            self.fengtu = live if live is not None else FengtuMockAdapter()
+        self.fengtu_mode = "live" if getattr(self.fengtu, "name", "") == "fengtu_live" else "mock"
         self.intl = IntlMockAdapter()
         self.sf = SFFilterMockAdapter()
         self.generic_carrier = GenericCarrierMock()
@@ -148,14 +155,51 @@ class ReachabilityPipeline:
             )
         )
 
+        # Attach Fengtu live API errors from parse (if any)
+        if router.get("parser") == "fengtu" and hasattr(self.fengtu, "last_error"):
+            err = getattr(self.fengtu, "last_error", None)
+            if err and err.get("stage") == "parse":
+                ctx.reasons.append(
+                    Reason(
+                        code=err.get("reason_code") or "FENGTU_HTTP_ERROR",
+                        message=err.get("message") or "Fengtu API error",
+                        path="stage.parse",
+                        severity=Severity.WARN,
+                        stage="parse",
+                        details={"http_status": err.get("http_status")},
+                    )
+                )
+
         # 4) geocode / verify
         t0 = time.perf_counter()
         if parsed and ctx.country:
             if router.get("geocoder") == "fengtu":
                 verify = self.fengtu.verify(parsed)
                 ctx.verify_ok = bool(verify.get("ok"))
+                if verify.get("reason_code"):
+                    ctx.reasons.append(
+                        Reason(
+                            code=verify["reason_code"],
+                            message=verify.get("message") or "Fengtu verify error",
+                            path="stage.verify",
+                            severity=Severity.WARN,
+                            stage="verify",
+                        )
+                    )
                 self.engine.evaluate_stage("verify", ctx)
                 geocode = self.fengtu.geocode(parsed)
+                err = getattr(self.fengtu, "last_error", None)
+                if err and err.get("stage") == "geocode":
+                    ctx.reasons.append(
+                        Reason(
+                            code=err.get("reason_code") or "FENGTU_HTTP_ERROR",
+                            message=err.get("message") or "Fengtu geocode error",
+                            path="stage.geocode",
+                            severity=Severity.WARN,
+                            stage="geocode",
+                            details={"http_status": err.get("http_status")},
+                        )
+                    )
             else:
                 geocode = self.intl.geocode(
                     parsed,

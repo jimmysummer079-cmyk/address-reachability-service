@@ -21,8 +21,8 @@ app = FastAPI(
     title="Address Reachability Service",
     description=(
         "输入地址 → 返回可达性（deliverability）。不可达时返回机器可读原因码 + path "
-        "（指向字段或流水线阶段）。中国路由丰图 mock；国际国家路由 intl mock；"
-        "承运商筛单语义对齐顺丰 filterResult。本脚手架不包含真实丰图/顺丰凭证。"
+        "（指向字段或流水线阶段）。中国路由：若设置 FENGTU_APP_KEY 则用丰图 live SaaS，"
+        "否则 FengtuMockAdapter；国际国家路由 intl mock；承运商筛单语义对齐顺丰 filterResult。"
     ),
     version="0.1.0",
     docs_url="/docs",
@@ -42,7 +42,7 @@ def health() -> HealthResponse:
         status="ok",
         rules_version=engine.version,
         adapters={
-            "fengtu": "mock",
+            "fengtu": pipeline.fengtu_mode,
             "sf_filter": "mock",
             "intl_geocoder": "mock",
         },

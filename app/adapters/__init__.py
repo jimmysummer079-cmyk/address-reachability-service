@@ -1,1 +1,1 @@
-"""External adapters — Fengtu / SF / intl mocks. No real credentials."""
+"""External adapters — Fengtu live/mock, SF filter mock, intl mocks."""
