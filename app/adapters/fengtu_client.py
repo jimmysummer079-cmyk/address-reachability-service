@@ -289,22 +289,19 @@ class FengtuClient:
 
         self.last_parse_source = source or "none"
 
-        province = block.get("province") or fields.get("province")
-        city = block.get("city") or fields.get("city")
-        county = (
-            block.get("county")
-            or block.get("district")
-            or fields.get("county")
-        )
-        town = block.get("town") or block.get("vilName") or fields.get("suburb")
+        # Successful addressResolve / addressidentify is the only source of
+        # components. Request fields are a previous form fill and must not leak in.
+        province = block.get("province") or None
+        city = block.get("city") or None
+        county = block.get("county") or block.get("district") or None
+        town = block.get("town") or block.get("vilName") or None
         detail = (
             block.get("detailaddr")
             or block.get("detailAddr")
             or block.get("address")
-            or fields.get("road")
-            or raw
+            or None
         )
-        adcode = block.get("adcode") or block.get("citycode") or block.get("countycode")
+        postal = block.get("postcode") or block.get("zipcode") or block.get("postal_code")
 
         conf = 0.85 if (province and city) else 0.45
         if source == "addressResolve" and province and city:
@@ -318,7 +315,7 @@ class FengtuClient:
             district=county,
             suburb=town,
             road=detail,
-            postal_code=fields.get("postal_code") or (str(adcode) if adcode else None),
+            postal_code=str(postal) if postal else None,
             cleaned_raw=raw,
             parse_confidence=conf,
             completeness="sufficient" if province and city else "insufficient",

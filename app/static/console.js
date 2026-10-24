@@ -67,7 +67,7 @@
     },
   ];
 
-  const STRUCT_FIELDS = [
+  const PRIMARY_FIELDS = [
     ["province", "省 / 直辖市"],
     ["city", "城市"],
     ["county", "区县"],
@@ -75,12 +75,33 @@
     ["road", "道路"],
     ["house_number", "门牌"],
     ["postal_code", "邮编"],
+  ];
+  const EXTRA_FIELDS = [
     ["admin1", "一级行政区"],
     ["admin2", "二级行政区"],
     ["locality", "地方"],
     ["suburb", "街区 / 郊区"],
     ["sample_tag", "样例标签"],
   ];
+  const STRUCT_FIELDS = PRIMARY_FIELDS.concat(EXTRA_FIELDS);
+  const PARSE_KEYS = [
+    "province",
+    "city",
+    "county",
+    "district",
+    "road",
+    "house_number",
+    "postal_code",
+    "admin1",
+    "admin2",
+    "locality",
+    "suburb",
+  ];
+  const STATUS_IDLE = "提交后按本次解析回填。中国地址以丰图解析为准（有密钥走线上，否则模拟）。";
+  const STATUS_SYNCED = "已按本次解析更新，与当前原始地址一致。";
+  const STATUS_STALE = "原始地址已改，下面仍是上一次解析，不能当作当前结果。再次提交后会覆盖。";
+
+  let rawAtSync = null;
 
   const FIELD_LABELS = {
     country: "国家",
@@ -343,12 +364,52 @@
     return `${lead}。最先出问题的是「${stageLabel(primary.stage)}」：${where}。${codeLabel(primary)}。`;
   }
 
-  function buildStructFields() {
-    const grid = $("struct-grid");
-    STRUCT_FIELDS.forEach(([key, label]) => {
-      const input = el("input", { id: `f-${key}`, placeholder: "可选" });
+  function fillStructGrid(grid, fields) {
+    fields.forEach(([key, label]) => {
+      const input = el("input", { id: `f-${key}`, placeholder: "待解析" });
       grid.append(el("div", null, [el("label", { class: "field-label", for: `f-${key}`, text: label }), input]));
     });
+  }
+
+  function buildStructFields() {
+    fillStructGrid($("struct-primary"), PRIMARY_FIELDS);
+    fillStructGrid($("struct-extra"), EXTRA_FIELDS);
+  }
+
+  function isStructStale() {
+    if (rawAtSync == null) return false;
+    if ($("raw").value.trim() === rawAtSync) return false;
+    const hasParse = PARSE_KEYS.some((key) => {
+      const input = $(`f-${key}`);
+      return input && input.value.trim();
+    });
+    return hasParse || $("f-lat").value.trim() !== "" || $("f-lng").value.trim() !== "";
+  }
+
+  function refreshStructState() {
+    const box = $("struct-box");
+    const status = $("struct-status");
+    const stale = isStructStale();
+    const synced = !stale && rawAtSync != null && $("raw").value.trim() === rawAtSync;
+    box.classList.toggle("stale", stale);
+    box.classList.toggle("synced", synced);
+    status.classList.toggle("stale", stale);
+    if (stale) status.textContent = STATUS_STALE;
+    else if (synced) status.textContent = STATUS_SYNCED;
+    else status.textContent = STATUS_IDLE;
+  }
+
+  function applyParsed(parsed, submittedRaw) {
+    if (!parsed) return;
+    PARSE_KEYS.forEach((key) => {
+      const input = $(`f-${key}`);
+      if (!input) return;
+      const value = parsed[key];
+      input.value = value == null || value === "" ? "" : String(value);
+    });
+    if (parsed.country) $("country").value = String(parsed.country);
+    rawAtSync = (submittedRaw || "").trim();
+    refreshStructState();
   }
 
   function buildSamples() {
@@ -390,8 +451,10 @@
     $("f-lat").value = address.lat == null ? "" : String(address.lat);
     $("f-lng").value = address.lng == null ? "" : String(address.lng);
     const advanced = document.querySelector(".advanced");
-    const hasStruct = STRUCT_FIELDS.some(([key]) => address[key] != null && address[key] !== "");
-    if (advanced && hasStruct) advanced.open = true;
+    const hasExtra = EXTRA_FIELDS.some(([key]) => address[key] != null && address[key] !== "");
+    if (advanced && (hasExtra || address.lat != null || address.lng != null)) advanced.open = true;
+    rawAtSync = (address.raw || "").trim();
+    refreshStructState();
     submitQuery();
   }
 
@@ -409,16 +472,22 @@
     const country = $("country").value.trim().toUpperCase();
     if (raw) address.raw = raw;
     if (country) address.country = country;
-    STRUCT_FIELDS.forEach(([key]) => {
-      const value = $(`f-${key}`).value.trim();
-      if (value) address[key] = value;
-    });
-    const lat = readNumber("f-lat", "纬度");
-    const lng = readNumber("f-lng", "经度");
-    if (!lat.ok) return { error: lat.message };
-    if (!lng.ok) return { error: lng.message };
-    if (lat.value != null) address.lat = lat.value;
-    if (lng.value != null) address.lng = lng.value;
+    const stale = isStructStale();
+    if (stale && !raw) {
+      return { error: "原始地址已改。请填写新的原始地址后再分析，旧的结构化字段不会提交。" };
+    }
+    if (!stale) {
+      STRUCT_FIELDS.forEach(([key]) => {
+        const value = $(`f-${key}`).value.trim();
+        if (value) address[key] = value;
+      });
+      const lat = readNumber("f-lat", "纬度");
+      const lng = readNumber("f-lng", "经度");
+      if (!lat.ok) return { error: lat.message };
+      if (!lng.ok) return { error: lng.message };
+      if (lat.value != null) address.lat = lat.value;
+      if (lng.value != null) address.lng = lng.value;
+    }
     if (Object.keys(address).length === 0) return { error: "请填写原始地址，或至少一项结构化字段。" };
     const body = { address };
     const carrier = $("carrier").value.trim();
@@ -469,6 +538,7 @@
         return;
       }
       renderResult(data, built.body);
+      applyParsed(data && data.parsed, (built.body.address && built.body.address.raw) || "");
     } catch (err) {
       if (seq !== requestSeq) return;
       renderHttpError(0, err && err.message ? err.message : "网络请求失败");
@@ -711,6 +781,8 @@
     const card = el("section", { class: `card ${cardTone === "block" ? "bad" : cardTone === "warn" ? "review" : ""}` }, [
       el("h3", { text: "解析字段" }),
     ]);
+    const sourceLabel = fengtuSourceLabel(resp);
+    if (sourceLabel) card.append(el("p", { class: "hint", text: sourceLabel }));
     if (!resp.parsed) {
       card.append(el("p", { class: "hint", text: "这次没有返回 parsed。" }));
       return card;
@@ -899,9 +971,18 @@
     }
   }
 
+  function fengtuSourceLabel(resp) {
+    const provider = resp.geocode && resp.geocode.provider;
+    if (provider === "fengtu_live") return "解析与地理编码来自丰图线上（addressResolve / geocode）。";
+    if (provider === "fengtu_mock") return "解析与地理编码来自丰图模拟。配置 FENGTU_APP_KEY 后改为线上。";
+    return "";
+  }
+
   function resetForm() {
     form.reset();
     clearStruct();
+    rawAtSync = null;
+    refreshStructState();
     $("raw").classList.remove("hit");
     showFormError("");
     resultEl.replaceChildren(
@@ -916,6 +997,7 @@
   buildStructFields();
   buildSamples();
   form.addEventListener("submit", submitQuery);
+  $("raw").addEventListener("input", refreshStructState);
   $("clear").addEventListener("click", resetForm);
   loadHealth();
 })();
