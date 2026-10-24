@@ -4,7 +4,8 @@
 > **版本：** 0.1.0 · **更新：** 2026-10-24（Asia/Shanghai）  
 > **定位：** 对外 REST：**输入地址 → 返回可达性**；不可达时返回**原因码 + 出错字段/阶段 path**。  
 > **范围：** 本期以 **可达性 / 可送达（deliverability）** 为主；POD/乱签收双分中的签收风险见既有文档，本 API **不返回 PODRiskScore**。  
-> **关联：** `/workspace/fengtu-address-risk-solution.md`、`/workspace/global-address-quality-fengtu-ops.md`
+> **关联：** [ARCHITECTURE.md](./ARCHITECTURE.md)（对照中国区地址管理 PPT 的范围与演进）、`/workspace/fengtu-address-risk-solution.md`、`/workspace/global-address-quality-fengtu-ops.md`
+> **架构边界：** 本文件描述 Deliverability API 细节；企业全景（围栏/交接/POD/IOC）见 ARCHITECTURE.md，本期 API **不返回 PODRiskScore**。
 
 ---
 
@@ -20,8 +21,9 @@
 
 | 非目标（本期） |
 |----------------|
-| 真实丰图 / 顺丰开放平台凭证与联调（仅接口抽象 + mock） |
-| POD / 乱签收评分与证据链 |
+| 顺丰开放平台筛单真实联调（现 `sf_filter_mock`） |
+| 花瓣解析、电子围栏/打卡、交接核验、POD AI、IOC（见 ARCHITECTURE M2–M5） |
+| POD / 乱签收评分与证据链（本 API 不返回 PODRiskScore） |
 | 替代承运商核心运单系统 |
 
 ---

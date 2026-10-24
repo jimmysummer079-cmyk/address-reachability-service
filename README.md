@@ -2,12 +2,20 @@
 
 输入地址 → 返回**可达性 / 可送达（deliverability）**；不可达时给出机器可读原因码 + `path`（字段或流水线阶段）。
 
+- 架构（对照 PPT）：[ARCHITECTURE.md](./ARCHITECTURE.md)
 - 设计文档（中文）：[DESIGN.md](./DESIGN.md)
 - OpenAPI 摘要：[docs/openapi-snippet.yaml](./docs/openapi-snippet.yaml)
 - 规则配置：[config/rules.yaml](./config/rules.yaml)
 - 丰图：设置环境变量 `FENGTU_APP_KEY` 时走 live SaaS（见 [FENGTU_LIVE.md](./FENGTU_LIVE.md)）；未设置则用 mock
 - 顺丰筛单仍为 mock（无开放平台凭证）
 - 配置模板：[`.env.example`](./.env.example)（切勿提交 `.env`）
+
+## Architecture
+
+企业「中国区物流地址管理」全景（生成→变更→使用→运营）中，本仓库定位为 **可派送性 / 可达性查询内核**（使用阶段判定 + 可配置规则）。围栏打卡、交接核验、POD、IOC、CRM 回传等见路线图，不在本期实现。
+
+- 架构说明（中文，对照 PPT）：[ARCHITECTURE.md](./ARCHITECTURE.md)
+- API/流水线设计：[DESIGN.md](./DESIGN.md)
 
 ## 要求
 
