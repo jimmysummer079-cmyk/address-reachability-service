@@ -316,6 +316,17 @@ class ReachabilityPipeline:
 
     @staticmethod
     def _compose_raw(addr: AddressInput) -> str:
+        if (addr.country or "").upper() == "CN":
+            parts = [
+                addr.province,
+                addr.city,
+                addr.county or addr.district,
+                addr.suburb,
+                addr.road,
+                addr.house_number,
+                addr.postal_code,
+            ]
+            return "".join(p for p in parts if p)
         parts = [
             addr.road,
             addr.house_number,

@@ -117,7 +117,13 @@ h1 {
   min-width: 0;
 }
 
-.form-panel { padding: 18px 18px 16px; position: sticky; top: 14px; }
+.form-panel {
+  padding: 18px 18px 16px;
+  position: sticky;
+  top: 14px;
+  max-height: calc(100vh - 28px);
+  overflow: auto;
+}
 
 .panel-head h2 { margin: 0 0 4px; font-size: 18px; }
 
@@ -196,6 +202,39 @@ textarea.hit, input.hit {
 }
 
 .advanced summary { cursor: pointer; color: var(--pine-deep); font-size: 13px; font-weight: 600; }
+
+.struct-box {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 10px 4px;
+  background: #fcfbf8;
+}
+
+.struct-head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.struct-box.stale {
+  background: var(--amber-soft);
+  border-color: #ead7ae;
+}
+
+.struct-box.stale .hint {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.struct-box.stale input {
+  background: #fff8ea;
+  color: #6b5420;
+}
+
+.struct-box.synced {
+  background: #f4fbfa;
+  border-color: #c5e0dc;
+}
 
 .struct-grid {
   display: grid;

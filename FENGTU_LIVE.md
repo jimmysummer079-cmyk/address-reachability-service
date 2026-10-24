@@ -14,9 +14,11 @@ Auth: HTTP header `ak: <FENGTU_APP_KEY>`
 | Address resolve (preferred parse) | POST JSON | `/opquery/v1/addressResolve` | `{"address"}` | `result.data`: `province`/`city`/`county`/`town`/`vilName`/codes | **LIVE** |
 | Authenticity verify | POST JSON | `/opquery/v1/addressRealCheck` | `{"address"}` | `result.addressTrue` e.g. `"真实"` | **LIVE** |
 
-`parse()` prefers `addressResolve`, falls back to `addressidentify`.  
+`parse()` prefers `addressResolve`, falls back to `addressidentify`. A successful response is the only source of province/city/district/road — request structured fields are not merged back in, so an old form fill cannot override the new raw address. If both calls fail, the client falls back to those fields and marks the parse low confidence.  
 `verify()` uses `addressRealCheck` (`addressTrue`).  
 `geocode()` uses `/oplbs/v1/geocode/geo`.
+
+Unset `FENGTU_APP_KEY` to stay on `FengtuMockAdapter` (local demo). The mock segments the raw Chinese string itself and likewise ignores structured fields once the raw text contains admin or road tokens.
 
 ### Removed defaults (403 `consumer_name` forbidden)
 

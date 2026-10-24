@@ -53,9 +53,17 @@
           <label class="field-label" for="product">产品代码（可选）</label>
           <input id="product" name="product_code" placeholder="留空即可" />
 
+          <div id="struct-box" class="struct-box">
+            <div class="struct-head">
+              <h3>结构化地址</h3>
+              <p id="struct-status" class="hint">提交后按本次解析回填。中国地址以丰图解析为准。</p>
+            </div>
+            <div class="struct-grid" id="struct-primary"></div>
+          </div>
+
           <details class="advanced">
-            <summary>结构化字段（可选）</summary>
-            <div class="struct-grid" id="struct-grid"></div>
+            <summary>更多字段（可选）</summary>
+            <div class="struct-grid" id="struct-extra"></div>
             <div class="split">
               <div>
                 <label class="field-label" for="f-lat">纬度 lat</label>
