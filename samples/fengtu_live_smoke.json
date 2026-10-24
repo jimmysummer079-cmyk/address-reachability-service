@@ -1,73 +1,291 @@
 {
   "key_present": true,
   "address_len": 15,
+  "endpoints": {
+    "geocode": "GET /oplbs/v1/geocode/geo",
+    "addressidentify": "POST /opsearch/v1/place/addressidentify",
+    "addressResolve": "POST /opquery/v1/addressResolve",
+    "addressRealCheck": "POST /opquery/v1/addressRealCheck"
+  },
   "addressidentify": {
-    "http_status": 403,
-    "ok": false,
+    "http_status": 200,
+    "ok": true,
     "json_keys": [
-      "message"
+      "status",
+      "result",
+      "reqId"
+    ],
+    "result_keys": [
+      "code",
+      "paidata",
+      "src",
+      "data",
+      "mark",
+      "result",
+      "sn",
+      "multiple",
+      "dispatchMark",
+      "moreThan"
+    ],
+    "data_keys": [
+      "province",
+      "city",
+      "county",
+      "town",
+      "adcode",
+      "citycode",
+      "detailaddr"
     ],
     "shape": {
-      "message": "str"
+      "status": "int",
+      "result": {
+        "code": "int",
+        "paidata": {
+          "address": "str"
+        },
+        "src": "str",
+        "data": {
+          "province": "str",
+          "city": "str",
+          "county": "str",
+          "town": "str",
+          "adcode": "str",
+          "citycode": "str",
+          "detailaddr": "str"
+        },
+        "mark": "str",
+        "result": "str",
+        "sn": "str",
+        "multiple": "str",
+        "dispatchMark": "str",
+        "moreThan": "str"
+      },
+      "reqId": "str"
     },
-    "biz_status": null
+    "biz_status": 0,
+    "addressTrue": null
+  },
+  "addressResolve": {
+    "http_status": 200,
+    "ok": true,
+    "json_keys": [
+      "status",
+      "result",
+      "reqId"
+    ],
+    "result_keys": [
+      "query",
+      "data"
+    ],
+    "data_keys": [
+      "province",
+      "city",
+      "county",
+      "town",
+      "adcode",
+      "citycode",
+      "detailAddr",
+      "provinceCode",
+      "cityLevCode",
+      "countyCode",
+      "townCode",
+      "vilName",
+      "classCode",
+      "vilcode"
+    ],
+    "shape": {
+      "status": "int",
+      "result": {
+        "query": {
+          "address": "str"
+        },
+        "data": {
+          "province": "str",
+          "city": "str",
+          "county": "str",
+          "town": "str",
+          "adcode": "str",
+          "citycode": "str",
+          "detailAddr": "str",
+          "provinceCode": "str",
+          "cityLevCode": "str",
+          "countyCode": "str",
+          "townCode": "str",
+          "vilName": "str",
+          "classCode": "str",
+          "vilcode": "str"
+        }
+      },
+      "reqId": "str"
+    },
+    "biz_status": 0,
+    "addressTrue": null
+  },
+  "addressRealCheck": {
+    "http_status": 200,
+    "ok": true,
+    "json_keys": [
+      "status",
+      "result",
+      "reqId"
+    ],
+    "result_keys": [
+      "query",
+      "addressTrue"
+    ],
+    "data_keys": null,
+    "shape": {
+      "status": "int",
+      "result": {
+        "query": {
+          "address": "str"
+        },
+        "addressTrue": "str"
+      },
+      "reqId": "str"
+    },
+    "biz_status": 0,
+    "addressTrue": "真实"
   },
   "geocode": {
-    "http_status": 403,
-    "ok": false,
+    "http_status": 200,
+    "ok": true,
     "json_keys": [
-      "message"
+      "status",
+      "result",
+      "reqId"
+    ],
+    "result_keys": [
+      "src",
+      "type",
+      "precision",
+      "xcoord",
+      "ycoord",
+      "adcode",
+      "adname",
+      "province",
+      "city",
+      "district",
+      "confidence",
+      "source",
+      "cp",
+      "standardization",
+      "time",
+      "match_level",
+      "city_adcode",
+      "geo_source",
+      "src_level",
+      "src_level_desc",
+      "geo_level",
+      "geo_level_desc",
+      "match_filter",
+      "src_address",
+      "poitype",
+      "mark",
+      "mark_desc",
+      "cp_score",
+      "poi_count",
+      "standar_flag",
+      "standar_word",
+      "maxDistance",
+      "uid"
     ],
     "shape": {
-      "message": "str"
+      "status": "int",
+      "result": {
+        "src": "str",
+        "type": "str",
+        "precision": "int",
+        "xcoord": "float",
+        "ycoord": "float",
+        "adcode": "str",
+        "adname": [
+          "str",
+          "...len=3"
+        ],
+        "province": "str",
+        "city": "str",
+        "district": "str",
+        "confidence": "int",
+        "source": "str",
+        "cp": "int",
+        "standardization": "str",
+        "time": "int",
+        "match_level": "int",
+        "city_adcode": "str",
+        "geo_source": "str",
+        "src_level": "int",
+        "src_level_desc": "str",
+        "geo_level": "str",
+        "geo_level_desc": "str",
+        "match_filter": "str",
+        "src_address": "str",
+        "poitype": "str",
+        "mark": "str",
+        "mark_desc": "str",
+        "cp_score": "float",
+        "poi_count": "int",
+        "standar_flag": "str",
+        "standar_word": "str",
+        "maxDistance": "int",
+        "uid": "str"
+      },
+      "reqId": "str"
     },
-    "biz_status": null
+    "biz_status": 0
   },
   "client_parse": {
     "provider": "fengtu_live",
-    "completeness": "insufficient",
-    "parse_confidence": 0.1,
-    "has_province": false,
-    "has_city": false,
-    "last_error": {
-      "reason_code": "FENGTU_AUTH_FAIL",
-      "message": "Fengtu auth failed (HTTP 403)",
-      "http_status": 403,
-      "stage": "parse"
-    }
+    "parse_source": "addressResolve",
+    "completeness": "sufficient",
+    "parse_confidence": 0.9,
+    "has_province": true,
+    "has_city": true,
+    "province": "广东省",
+    "city": "深圳市",
+    "county": "南山区",
+    "last_error": null
   },
   "client_geocode": {
-    "has_lat": false,
-    "has_lng": false,
-    "confidence": 0.0,
+    "has_lat": true,
+    "has_lng": true,
+    "lat": 22.5234844,
+    "lng": 113.942097,
+    "confidence": 0.94,
     "provider": "fengtu_live",
-    "last_error": {
-      "reason_code": "FENGTU_AUTH_FAIL",
-      "message": "Fengtu auth failed (HTTP 403)",
-      "http_status": 403,
-      "stage": "geocode"
-    }
+    "last_error": null
   },
   "client_verify": {
-    "ok": false,
-    "level": "api_error",
-    "reason_code": "FENGTU_AUTH_FAIL"
+    "ok": true,
+    "level": "address_true",
+    "message": "addressTrue=真实",
+    "reason_code": null
   },
   "pipeline_fengtu_mode": "live",
   "pipeline": {
-    "status": "unreachable",
-    "reachable": false,
-    "score": 7.5,
-    "reason_codes": [
-      "ADDR_PROVINCE_MISSING",
-      "FENGTU_AUTH_FAIL",
-      "FENGTU_AUTH_FAIL",
-      "VERIFY_FAIL",
-      "FENGTU_AUTH_FAIL",
-      "GEO_LOW_CONF",
-      "CARRIER_ADDR_UNCONFIRMED"
-    ],
+    "status": "reachable",
+    "reachable": true,
+    "score": 97.3,
+    "reason_codes": [],
     "geocode_provider": "fengtu_live",
-    "parsed_completeness": "insufficient"
+    "has_lat": true,
+    "has_lng": true,
+    "lat": 22.5234844,
+    "lng": 113.942097,
+    "parsed_completeness": "sufficient",
+    "parsed_province": "广东省",
+    "parsed_city": "深圳市"
+  },
+  "health": {
+    "http_status": 200,
+    "body": {
+      "status": "ok",
+      "rules_version": "1.0.0",
+      "adapters": {
+        "fengtu": "live",
+        "sf_filter": "mock",
+        "intl_geocoder": "mock"
+      }
+    }
   }
 }

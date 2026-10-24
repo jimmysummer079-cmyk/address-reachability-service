@@ -2,17 +2,26 @@
 
 Credential: env `FENGTU_APP_KEY` (AppKey / `ak`). **Never commit, print, or log the value.**
 
-## Endpoints used by `app/adapters/fengtu_client.py`
+Base: `https://gis-apis.sf-express.com`  
+Auth: HTTP header `ak: <FENGTU_APP_KEY>`
 
-| Capability | Method | URL | Auth | Status |
-|---|---|---|---|---|
-| Address identify / parse | POST JSON | `https://gis-apis.sf-express.com/pai/api/addressidentify` | JSON `ak` (+ Header `ak`) | **Attempted live** — see smoke section below |
-| Geocode | GET | `https://gis-apis.sf-express.com/all/api/geocode/geo?address=...&cc=1` | Header `ak` | **Attempted live** — see smoke section below |
-| Authenticity verify | — | No confirmed public SaaS path for this key | — | **Unverified** — derived from `dispatchMark` / parse confidence |
-| Address standardize (dedicated) | — | Product exists on lbs.sfmap.com.cn; cloud path not confirmed | — | **Unverified** — geocode `standardization` field used when present |
-| Official private WebService geocode | GET | `http://{IP}:{PORT}/openapi/geocode/geo` | private deploy | **Not used** (not SaaS) |
+## Endpoints used by `app/adapters/fengtu_client.py` (official 2.0, LIVE verified)
 
-Sources: third-party blogs mirroring gis-apis.sf-express.com; product list on https://lbs.sfmap.com.cn/ (地址服务: 地理编码 / 验真 / 标准化 / 五级解析). Prefer official console docs when available.
+| Capability | Method | Path | Body / Query | Sample result fields | Status |
+|---|---|---|---|---|---|
+| Geocode | GET | `/oplbs/v1/geocode/geo` | `address`, `cc=1`, optional `city` | `xcoord`, `ycoord`, `confidence`, `standardization`, `province`, `city`, `district`, `adcode`, `src_level_desc`, `geo_level_desc` | **LIVE** HTTP 200, status=0 |
+| Address identify / parse | POST JSON | `/opsearch/v1/place/addressidentify` | `{"addresstext","syscode"}` (ak header; ak in body optional) | `result.data`: `province`, `city`, `county`, `town`, `detailaddr`, `adcode` | **LIVE** |
+| Address resolve (preferred parse) | POST JSON | `/opquery/v1/addressResolve` | `{"address"}` | `result.data`: `province`/`city`/`county`/`town`/`vilName`/codes | **LIVE** |
+| Authenticity verify | POST JSON | `/opquery/v1/addressRealCheck` | `{"address"}` | `result.addressTrue` e.g. `"真实"` | **LIVE** |
+
+`parse()` prefers `addressResolve`, falls back to `addressidentify`.  
+`verify()` uses `addressRealCheck` (`addressTrue`).  
+`geocode()` uses `/oplbs/v1/geocode/geo`.
+
+### Removed defaults (403 `consumer_name` forbidden)
+
+- `/pai/api/addressidentify`
+- `/all/api/geocode/geo`
 
 ## Error → reason codes
 
@@ -20,33 +29,37 @@ Sources: third-party blogs mirroring gis-apis.sf-express.com; product list on ht
 |---|---|
 | HTTP 401/403 or biz status hinting unauthorized (e.g. 113) | `FENGTU_AUTH_FAIL` |
 | Other HTTP / network / non-JSON | `FENGTU_HTTP_ERROR` |
-| Identify biz status ≠ 0 | `FENGTU_PARSE_FAIL` |
+| Identify / resolve biz status ≠ 0 | `FENGTU_PARSE_FAIL` |
 | Geocode biz status ≠ 0 | `FENGTU_GEOCODE_FAIL` |
+| RealCheck biz fail / addressTrue false | `FENGTU_VERIFY_FAIL` |
 
 ## Health
 
 `GET /health` → `adapters.fengtu`: `live` if `FENGTU_APP_KEY` set and client constructed, else `mock`.
 
-## Smoke test (keys only; no PII dump)
-
-Run after setting the key in the environment (not in git):
-
-在仓库根目录执行：
+## Smoke test (keys only; no PII dump / no secrets)
 
 ```bash
+cd /workspace/address-reachability-service
 source .venv/bin/activate
+# export FENGTU_APP_KEY=...   # never echo
 python scripts/smoke_fengtu_live.py
 ```
-
-Results of the integration-time smoke are appended below by the smoke script / agent.
 
 ## Integration-time smoke (Asia/Shanghai)
 
 - key_present: `True`
-- addressidentify HTTP: `403` biz_status=`None` keys=`['message']`
-- geocode HTTP: `403` biz_status=`None` keys=`['message']`
-- pipeline mode: `live` status=`unreachable` reasons=`['ADDR_PROVINCE_MISSING', 'FENGTU_AUTH_FAIL', 'FENGTU_AUTH_FAIL', 'VERIFY_FAIL', 'FENGTU_AUTH_FAIL', 'GEO_LOW_CONF', 'CARRIER_ADDR_UNCONFIRMED']`
+- addressidentify HTTP: `200` biz_status=`0` result_keys=`['code', 'paidata', 'src', 'data', 'mark', 'result', 'sn', 'multiple', 'dispatchMark', 'moreThan']` data_keys=`['province', 'city', 'county', 'town', 'adcode', 'citycode', 'detailaddr']`
+- addressResolve HTTP: `200` biz_status=`0` data_keys=`['province', 'city', 'county', 'town', 'adcode', 'citycode', 'detailAddr', 'provinceCode', 'cityLevCode', 'countyCode', 'townCode', 'vilName', 'classCode', 'vilcode']`
+- addressRealCheck HTTP: `200` biz_status=`0` addressTrue=`真实`
+- geocode HTTP: `200` biz_status=`0` result_keys=`['src', 'type', 'precision', 'xcoord', 'ycoord', 'adcode', 'adname', 'province', 'city', 'district', 'confidence', 'source', 'cp', 'standardization', 'time', 'match_level', 'city_adcode', 'geo_source', 'src_level', 'src_level_desc', 'geo_level', 'geo_level_desc', 'match_filter', 'src_address', 'poitype', 'mark', 'mark_desc', 'cp_score', 'poi_count', 'standar_flag', 'standar_word', 'maxDistance', 'uid']`
+- client_parse: province=`广东省` city=`深圳市` source=`addressResolve`
+- client_geocode: has_lat=`True` has_lng=`True`
+- client_verify: ok=`True` level=`address_true`
+- pipeline mode: `live` reachable=`True` status=`reachable` score=`97.3` reasons=`[]`
+- health fengtu: `live`
 
-- addressidentify live verified: **no**
-- geocode live verified: **no**
-
+- addressidentify live verified: **yes**
+- addressResolve live verified: **yes**
+- addressRealCheck live verified: **yes**
+- geocode live verified: **yes**

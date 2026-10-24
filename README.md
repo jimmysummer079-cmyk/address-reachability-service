@@ -16,9 +16,8 @@
 
 ## 安装与启动
 
-在仓库根目录执行：
-
 ```bash
+cd /workspace/address-reachability-service
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -37,7 +36,7 @@ cp .env.example .env
 # export FENGTU_APP_KEY=...   # never commit; never echo
 ```
 
-Live client: `app/adapters/fengtu_client.py`（`addressidentify` + `geocode/geo`）。详情见 [FENGTU_LIVE.md](./FENGTU_LIVE.md)。
+Live client: `app/adapters/fengtu_client.py`（2.0: `addressResolve` / `addressidentify` / `addressRealCheck` / `oplbs` geocode）。详情见 [FENGTU_LIVE.md](./FENGTU_LIVE.md)。
 
 ## 示例 curl
 
